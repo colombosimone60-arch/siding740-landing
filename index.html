@@ -1,0 +1,528 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SIDING740 — Deterministic MILP Pre-Screening for 740 m Single-Track Freight Corridors</title>
+<meta name="description" content="SIDING740 selects the minimum-cost set of passing sidings to extend so any single-track freight corridor can run 740 m trains.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#040507; --bg2:#090b0f; --ink:#ffffff; --mute:#8a93a3; --line:rgba(255,255,255,.12);
+  --cyan:#00D4FF; --warm:#ffb547; --fail:#ff4d5e;
+  --ease-out:cubic-bezier(.16,1,.3,1);
+  --gutter:clamp(16px,4vw,56px);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{background:var(--bg)}
+html.lenis,html.lenis body{height:auto}
+.lenis.lenis-smooth{scroll-behavior:auto!important}
+body{background:var(--bg);color:var(--ink);font-family:"Space Grotesk",system-ui,sans-serif;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+.mono{font-family:"JetBrains Mono",ui-monospace,monospace;letter-spacing:.08em;text-transform:uppercase;font-size:12px}
+a{color:inherit}
+
+/* ---------- header ---------- */
+.site-header{position:fixed;inset:0 0 auto 0;z-index:50;display:flex;align-items:center;justify-content:space-between;gap:16px;
+  padding:16px var(--gutter);color:#fff;pointer-events:none}
+.site-header::before{content:"";position:absolute;inset:0 0 auto 0;height:180%;z-index:-1;background:linear-gradient(to bottom,rgba(2,3,5,.8),rgba(2,3,5,0))}
+.site-header>*{pointer-events:auto}
+.brand-word{font-weight:700;letter-spacing:.26em;font-size:15px;text-shadow:0 1px 22px rgba(0,0,0,.55)}
+.brand-word span{color:var(--cyan)}
+.hright{display:flex;align-items:center;gap:22px}
+.chapter{display:flex;align-items:center;gap:14px}
+.chapter .bar{width:110px;height:2px;background:var(--line);position:relative;overflow:hidden}
+.chapter .bar i{position:absolute;inset:0;background:var(--cyan);transform-origin:left;transform:scaleX(0)}
+.btn-sm{display:inline-flex;align-items:center;gap:8px;padding:10px 16px;border:1px solid var(--cyan);color:var(--cyan);
+  text-decoration:none;font-family:"JetBrains Mono",monospace;font-size:12px;letter-spacing:.1em;font-weight:500;
+  background:rgba(0,212,255,.06);transition:background .3s,color .3s,box-shadow .3s}
+.btn-sm:hover{background:var(--cyan);color:#001018;box-shadow:0 0 28px rgba(0,212,255,.55)}
+@media (max-width:760px){.chapter{display:none}.btn-sm{padding:9px 12px;font-size:11px}}
+
+/* ---------- scene 1 ---------- */
+.scene{position:relative;height:100vh;overflow:hidden}
+.s1{display:grid;place-items:center;background:
+  radial-gradient(80% 55% at 50% 115%,rgba(0,212,255,.18),transparent 62%),
+  radial-gradient(60% 45% at 50% -10%,rgba(255,255,255,.05),transparent 70%),var(--bg)}
+.s1 .grid{position:absolute;inset:0;opacity:.3;
+  background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);
+  background-size:80px 80px;mask-image:radial-gradient(70% 60% at 50% 55%,#000,transparent)}
+.hero{position:relative;text-align:center;padding:0 var(--gutter)}
+.wordmark{font-weight:700;font-size:clamp(52px,13.5vw,230px);line-height:.9;letter-spacing:-.03em;display:inline-flex;overflow:hidden;padding:.06em 0;will-change:transform}
+.wordmark .cw,.wordmark .ch{display:inline-block;will-change:transform}
+.wordmark .ch.num{color:var(--cyan)}
+.s1 .kicker{color:var(--mute);margin-bottom:22px}
+.s1 .sub{margin:26px auto 0;max-width:30ch;font-size:clamp(16px,2vw,26px);font-weight:300;color:#dfe5ee;opacity:0;line-height:1.3}
+.s1 .claim{position:absolute;left:0;right:0;bottom:15vh;text-align:center;padding:0 var(--gutter);font-size:clamp(15px,1.5vw,20px);color:var(--mute);opacity:0}
+.s1 .claim b{color:#fff;font-weight:500}
+.s1 .rail{position:absolute;left:0;right:0;bottom:9vh;height:1px;background:linear-gradient(90deg,transparent,var(--cyan),transparent);transform:scaleX(0)}
+
+/* ---------- scene 2 : generic schematic ---------- */
+.s2{background:var(--bg2);display:flex;flex-direction:column;justify-content:center;padding:80px var(--gutter) 40px}
+.s2 .head{display:flex;justify-content:space-between;align-items:flex-end;gap:24px;flex-wrap:wrap;margin-bottom:clamp(20px,4vh,48px)}
+.s2 h2{font-size:clamp(30px,4.4vw,70px);line-height:1;letter-spacing:-.02em;font-weight:500;max-width:15ch}
+.s2 h2 em{font-style:normal;color:var(--cyan)}
+.s2 h2 s{text-decoration:none;color:var(--fail)}
+.s2 .readouts{display:flex;gap:clamp(18px,3vw,44px)}
+.s2 .ro .v{font-size:clamp(32px,4vw,60px);font-weight:700;letter-spacing:-.04em;line-height:1}
+.s2 .ro .v small{font-size:.4em;color:var(--mute);font-weight:400;letter-spacing:0;margin-left:4px}
+.s2 .ro .k{color:var(--mute);margin-top:8px}
+.s2 .ro.sel .v{color:var(--cyan)}
+.s2 .ro.rej .v{color:var(--fail)}
+.schem{width:100%;height:auto;overflow:visible}
+.schem text{font-family:"JetBrains Mono",monospace;fill:#8a93a3;font-size:12px;letter-spacing:.06em}
+.schem .stn-label{fill:#c9d1dc;font-size:12px}
+.legend{display:flex;gap:22px;flex-wrap:wrap;color:var(--mute);margin-top:6px}
+.legend i{display:inline-block;width:18px;height:3px;vertical-align:middle;margin-right:8px}
+.train-wrap{margin-top:clamp(18px,4vh,40px)}
+.train-wrap .lbl{display:flex;justify-content:space-between;color:var(--mute);margin-bottom:10px}
+.train-wrap .lbl b{color:#fff;font-weight:500}
+.freight{height:22px;display:flex;gap:3px;transform-origin:left center;will-change:transform}
+.freight i{flex:1;background:linear-gradient(#2a313c,#161b22);border-top:2px solid #3b4555}
+.freight i.loco{flex:0 0 3.2%;background:var(--cyan);border-top-color:#9ff0ff}
+.train-scale{position:relative;height:16px;margin-top:8px;border-top:1px solid var(--line)}
+.train-scale span{position:absolute;top:4px;transform:translateX(-50%);white-space:nowrap}
+@media (max-width:760px){.s2 .readouts{gap:16px}.schem text{font-size:15px}}
+
+/* ---------- scene 3 : engine pillars ---------- */
+.s3{background:var(--bg);height:100vh;overflow:hidden;display:flex;align-items:center}
+.track{display:flex;gap:clamp(16px,3vw,48px);width:max-content;padding:0 var(--gutter);will-change:transform}
+.panel{position:relative;width:min(80vw,620px);height:min(70vh,580px);border:1px solid var(--line);
+  background:linear-gradient(160deg,rgba(255,255,255,.04),rgba(255,255,255,0) 60%);
+  padding:clamp(22px,3vw,40px);display:flex;flex-direction:column;justify-content:space-between;overflow:hidden}
+.panel.intro{border:none;background:none;justify-content:center;width:min(86vw,700px)}
+.panel.intro h2{font-size:clamp(40px,6vw,100px);line-height:.95;letter-spacing:-.03em;font-weight:500}
+.panel.intro h2 span{color:var(--cyan)}
+.panel .idx{color:var(--cyan)}
+.panel .big{font-size:clamp(56px,8.4vw,140px);font-weight:700;letter-spacing:-.05em;line-height:.9;will-change:transform;white-space:nowrap}
+.panel .big small{font-size:.3em;letter-spacing:0;color:var(--cyan);font-weight:500;margin-left:.15em}
+.panel .big.sm{font-size:clamp(44px,6.4vw,104px)}
+.panel h3{font-size:clamp(20px,1.9vw,28px);font-weight:500}
+.panel p{color:var(--mute);line-height:1.5;margin-top:10px;max-width:44ch}
+.panel ul{list-style:none;margin-top:16px;display:grid;gap:6px}
+.panel li{color:#c9d1dc;font-size:14px}
+.panel li::before{content:"— ";color:var(--cyan)}
+.panel .glow{position:absolute;right:-20%;top:-30%;width:70%;aspect-ratio:1;border-radius:50%;
+  background:radial-gradient(circle,rgba(0,212,255,.22),transparent 65%);will-change:transform}
+
+/* ---------- marquee ---------- */
+.marquee{border-block:1px solid var(--line);overflow:hidden;padding:22px 0;background:var(--bg)}
+.marquee .row{display:flex;width:max-content;will-change:transform}
+.marquee span{font-size:clamp(26px,3.6vw,52px);font-weight:500;white-space:nowrap;padding-right:48px;color:#d7dde6}
+.marquee span b{color:var(--cyan);font-weight:500}
+
+/* ---------- sections ---------- */
+.section{min-height:min(92vh,900px);display:flex;align-items:center;padding:clamp(72px,10vh,120px) var(--gutter);position:relative}
+.section .wrap{width:100%;max-width:1240px;margin:0 auto}
+.section .wrap>*{opacity:0;transform:translateY(26px);transition:opacity .9s var(--ease-out),transform .9s var(--ease-out)}
+.section.in .wrap>*{opacity:1;transform:none}
+.section.in .wrap>*:nth-child(2){transition-delay:.09s}
+.section.in .wrap>*:nth-child(3){transition-delay:.18s}
+.section.in .wrap>*:nth-child(4){transition-delay:.27s}
+.section.in .wrap>*:nth-child(5){transition-delay:.36s}
+.eyebrow{color:var(--cyan);margin-bottom:28px}
+.mega{font-size:clamp(52px,10vw,176px);line-height:.88;letter-spacing:-.045em;font-weight:700}
+.mega .out{color:transparent;-webkit-text-stroke:1px rgba(255,255,255,.55)}
+.mega .c{color:var(--cyan)}
+.lede{font-size:clamp(17px,1.5vw,22px);line-height:1.55;color:var(--mute);max-width:58ch;margin-top:36px}
+.lede b{color:#fff;font-weight:500}
+.cols{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);margin-top:56px;border:1px solid var(--line)}
+.cols>div{background:var(--bg);padding:32px 28px}
+.cols h4{font-size:20px;font-weight:500;margin:14px 0 10px}
+.cols p{color:var(--mute);line-height:1.55;font-size:15px}
+@media (max-width:860px){.cols{grid-template-columns:1fr}}
+
+/* pilot benchmark */
+.pilot{background:var(--bg2);border-block:1px solid var(--line)}
+.badge{display:inline-flex;align-items:center;gap:12px;padding:10px 16px;border:1px solid var(--cyan);color:var(--cyan);background:rgba(0,212,255,.06)}
+.badge::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--cyan);box-shadow:0 0 12px var(--cyan)}
+.pilot .hero-stat{display:flex;align-items:flex-end;gap:clamp(16px,3vw,40px);flex-wrap:wrap;margin-top:40px}
+.pilot .hero-stat .v{font-size:clamp(96px,17vw,280px);font-weight:700;letter-spacing:-.06em;line-height:.8;color:var(--cyan)}
+.pilot .hero-stat .k{max-width:30ch;color:var(--mute);line-height:1.5;padding-bottom:12px}
+.pilot .hero-stat .k b{color:#fff;font-weight:500;display:block;font-size:clamp(20px,2vw,28px);margin-bottom:8px}
+.kv{display:grid;grid-template-columns:repeat(5,1fr);gap:1px;background:var(--line);border:1px solid var(--line);margin-top:48px}
+.kv>div{background:var(--bg);padding:26px 22px}
+.kv .v{font-size:clamp(28px,2.8vw,44px);font-weight:700;letter-spacing:-.03em;white-space:nowrap}
+.kv .k{color:var(--mute);margin-top:8px;line-height:1.4}
+@media (max-width:1000px){.kv{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:520px){.kv{grid-template-columns:1fr}}
+.pilot .notes{display:grid;grid-template-columns:1fr 1fr;gap:var(--gutter);margin-top:48px}
+.pilot .notes h4{font-size:20px;font-weight:500;margin-bottom:10px}
+.pilot .notes p{color:var(--mute);line-height:1.6}
+@media (max-width:860px){.pilot .notes{grid-template-columns:1fr}}
+.bars{margin-top:18px;display:grid;gap:14px}
+.bars .row .k{display:flex;justify-content:space-between;margin-bottom:8px}
+.bars .row .k b{font-weight:500;color:#fff}
+.bars .track-b{height:8px;background:rgba(255,255,255,.06);position:relative}
+.bars .fill{position:absolute;inset:0 auto 0 0;background:#d7dde6;transform-origin:left;transform:scaleX(0);transition:transform 1.4s var(--ease-out) .5s}
+.bars .fill.req{background:var(--warm)}
+.section.in .bars .fill{transform:scaleX(var(--s))}
+
+.final{text-align:center;background:radial-gradient(70% 70% at 50% 100%,rgba(0,212,255,.16),transparent 70%),var(--bg)}
+.final .mega{font-size:clamp(46px,8.6vw,146px)}
+.cta{position:relative;display:inline-flex;align-items:center;gap:18px;margin-top:48px;padding:24px 38px;
+  background:var(--cyan);color:#001018;text-decoration:none;font-family:"JetBrains Mono",monospace;font-weight:500;font-size:18px;letter-spacing:.1em;overflow:hidden;
+  box-shadow:0 0 0 1px rgba(160,240,255,.6),0 18px 70px -10px rgba(0,212,255,.7);
+  animation:breathe 3.2s ease-in-out infinite;transition:transform .35s var(--ease-out)}
+@keyframes breathe{50%{box-shadow:0 0 0 1px rgba(160,240,255,.9),0 22px 90px -6px rgba(0,212,255,.9)}}
+.cta::after{content:"";position:absolute;inset:0;transform:translateX(-120%) skewX(-20deg);
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.65),transparent);transition:transform .8s var(--ease-out)}
+.cta:hover{transform:translateY(-3px)}
+.cta:hover::after{transform:translateX(120%) skewX(-20deg)}
+.cta:active{transform:translateY(1px) scale(.985)}
+.cta-sub{margin-top:20px;color:var(--mute)}
+footer{padding:40px var(--gutter);border-top:1px solid var(--line);display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;color:var(--mute)}
+
+@media (prefers-reduced-motion:reduce){
+  .section .wrap>*{opacity:1;transform:none;transition:none}
+  .cta{animation:none}
+  .bars .fill{transition:none}
+}
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="brand-word">SIDING<span>740</span></div>
+  <div class="hright">
+    <div class="chapter mono"><span id="chapLabel">01 — Mission</span><span class="bar"><i id="chapBar"></i></span></div>
+    <a class="btn-sm" href="http://localhost:8501" target="_blank" rel="noopener">LAUNCH OPTIMIZER →</a>
+  </div>
+</header>
+
+<main>
+  <!-- SCENE 1 — wordmark -->
+  <section class="scene s1" id="s1">
+    <div class="grid"></div>
+    <div class="hero">
+      <div class="kicker mono">Freight rail infrastructure · Decision engine</div>
+      <h1 class="wordmark" id="wordmark" aria-label="SIDING740">SIDING740</h1>
+      <div id="subwrap"><p class="sub" id="sub">Deterministic MILP Pre-Screening for 740 m Single-Track Freight Corridors Worldwide</p></div>
+    </div>
+    <p class="claim" id="claim">Which sidings to extend, in what order, at <b>minimum CAPEX</b>.</p>
+    <div class="rail" id="rail"></div>
+  </section>
+
+  <!-- SCENE 2 — generic schematic -->
+  <section class="scene s2" id="s2">
+    <div class="head">
+      <div>
+        <div class="mono" style="color:var(--cyan);margin-bottom:18px">02 — Solver</div>
+        <h2>The solver <em>selects</em>. Physics <s>vetoes</s>.</h2>
+      </div>
+      <div class="readouts">
+        <div class="ro"><div class="v"><span id="roLen">550</span><small>m</small></div><div class="k mono">Train length</div></div>
+        <div class="ro sel"><div class="v"><span id="roSel">0</span></div><div class="k mono">Selected</div></div>
+        <div class="ro rej"><div class="v"><span id="roRej">0</span></div><div class="k mono">Infeasible</div></div>
+      </div>
+    </div>
+
+    <svg class="schem" id="schem" viewBox="0 0 1200 220" aria-label="Generic single-track corridor schematic from origin terminal to destination terminal, with candidate passing sidings selected or rejected by the solver">
+      <g id="kmTicks"></g>
+      <line x1="40" y1="120" x2="1160" y2="120" stroke="rgba(255,255,255,.18)" stroke-width="3"/>
+      <line id="mainLit" x1="40" y1="120" x2="1160" y2="120" stroke="#00D4FF" stroke-width="3"/>
+      <g>
+        <rect x="32" y="110" width="16" height="20" fill="#fff"/>
+        <text x="40" y="168" text-anchor="start" class="stn-label">ORIGIN TERMINAL</text>
+        <text x="40" y="186" text-anchor="start">KM 0</text>
+      </g>
+      <g>
+        <rect x="1152" y="110" width="16" height="20" fill="#fff"/>
+        <text x="1160" y="168" text-anchor="end" class="stn-label">DESTINATION TERMINAL</text>
+        <text x="1160" y="186" text-anchor="end">CORRIDOR END</text>
+      </g>
+      <g id="sidings"></g>
+    </svg>
+    <div class="legend mono">
+      <span><i style="background:rgba(255,255,255,.4)"></i>Candidate · 550 m</span>
+      <span><i style="background:var(--cyan)"></i>Selected · 750 m useful</span>
+      <span><i style="background:var(--fail)"></i>Physically infeasible</span>
+    </div>
+
+    <div class="train-wrap">
+      <div class="lbl mono"><span>Freight train</span><span><b id="trLen">550</b> m</span></div>
+      <div class="freight" id="freight"></div>
+      <div class="train-scale mono"><span style="left:0;transform:none">0</span><span style="left:74.3%">550 m</span><span style="left:100%;transform:translateX(-100%)">740 m</span></div>
+    </div>
+  </section>
+
+  <!-- SCENE 3 — engine pillars -->
+  <section class="s3" id="s3">
+    <div class="track" id="track">
+      <div class="panel intro">
+        <div class="mono" style="color:var(--cyan);margin-bottom:22px">03 — Engine</div>
+        <h2>Four pillars.<br>Any corridor.<br><span>Same answer.</span></h2>
+      </div>
+      <div class="panel"><div class="glow"></div>
+        <div><div class="idx mono">01</div><div class="big" style="margin-top:18px">MILP<small>HiGHS</small></div></div>
+        <div><h3>MILP Optimization (HiGHS)</h3>
+          <p>Minimum-cost selection of passing sidings to extend, constrained by budget and target headway.</p>
+          <ul><li>Binary decision per candidate siding</li><li>Budget and headway as hard constraints</li><li>Deterministic, reproducible optimum</li></ul></div>
+      </div>
+      <div class="panel"><div class="glow"></div>
+        <div><div class="idx mono">02</div><div class="big" style="margin-top:18px">kN<small>vs adhesion</small></div></div>
+        <div><h3>Traction Physics</h3>
+          <p>Automatic check of gradient, trailing mass and adhesion for every 740 m consist.</p>
+          <ul><li>Gradient and curve resistance</li><li>Required vs available tractive effort</li><li>Flags when double heading is needed</li></ul></div>
+      </div>
+      <div class="panel"><div class="glow"></div>
+        <div><div class="idx mono">03</div><div class="big" style="margin-top:18px">CO₂e<small>WTW</small></div></div>
+        <div><h3>LCA EN 15804 + WTW</h3>
+          <p>Well-to-Wheel operational savings balanced against the embodied carbon of new steel and concrete.</p>
+          <ul><li>Embodied carbon per siding (EN 15804)</li><li>Road-to-rail modal shift, WTW</li><li>Carbon and economic payback</li></ul></div>
+      </div>
+      <div class="panel"><div class="glow"></div>
+        <div><div class="idx mono">04</div><div class="big sm" style="margin-top:18px">CSV→JSON</div></div>
+        <div><h3>Any Corridor (CSV In / JSON Out)</h3>
+          <p>Load any single-track line as a CSV and export the pre-screening plan for OpenTrack / RailSys.</p>
+          <ul><li>Stations, siding lengths, gradients, unit costs</li><li>Ranked shortlist with cost and carbon</li><li>Ready for microsimulation handoff</li></ul></div>
+      </div>
+    </div>
+  </section>
+
+  <div class="marquee" aria-hidden="true"><div class="row" id="mrow">
+    <span>Single-track corridors <b>/</b> 740 m interoperable trains <b>/</b> Passing sidings <b>/</b> Headway <b>/</b> Adhesion <b>/</b> Embodied carbon <b>/</b></span>
+    <span>Single-track corridors <b>/</b> 740 m interoperable trains <b>/</b> Passing sidings <b>/</b> Headway <b>/</b> Adhesion <b>/</b> Embodied carbon <b>/</b></span>
+  </div></div>
+
+  <!-- Positioning -->
+  <section class="section">
+    <div class="wrap">
+      <div class="eyebrow mono">Positioning</div>
+      <h2 class="mega">Pre-screen<br><span class="out">first.</span><br>Simulate <span class="c">less.</span></h2>
+      <p class="lede">SIDING740 is a <b>deterministic pre-screening layer upstream of OpenTrack and RailSys</b>. It narrows dozens of candidate stations to the few that matter, so microsimulation effort goes to the shortlist, not the long list.</p>
+      <div class="cols">
+        <div><span class="mono" style="color:var(--cyan)">IN</span><h4>Corridor CSV</h4><p>Station layouts, useful siding lengths, gradients, unit costs, budget and target headway.</p></div>
+        <div><span class="mono" style="color:var(--cyan)">SOLVE</span><h4>MILP + physics + LCA</h4><p>Feasible, minimum-CAPEX extension set with traction and carbon checks attached. Same inputs, same answer.</p></div>
+        <div><span class="mono" style="color:var(--cyan)">OUT</span><h4>JSON plan</h4><p>A ranked shortlist ready for capacity validation in OpenTrack / RailSys.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Pilot validation -->
+  <section class="section pilot" id="pilot">
+    <div class="wrap">
+      <div class="badge mono">Pilot Benchmark · Luino Corridor (TEN-T Rhine-Alpine)</div>
+      <div class="hero-stat">
+        <div class="v">€<span class="count" data-to="7.88" data-dec="2">0.00</span>M</div>
+        <div class="k"><b>Total CAPEX, pilot validation</b>4 sidings extended from 550 m to 750 m useful length, unlocking 740 m trains on a real Alpine freight corridor.</div>
+      </div>
+      <div class="kv">
+        <div><div class="v"><span class="count" data-to="4" data-dec="0">0</span></div><div class="k mono">Sidings extended</div></div>
+        <div><div class="v"><span class="count" data-to="7694" data-dec="0">0</span> t/yr</div><div class="k mono">CO₂ avoided (WTW)</div></div>
+        <div><div class="v"><span class="count" data-to="0.10" data-dec="2">0.00</span> yr</div><div class="k mono">Carbon payback</div></div>
+        <div><div class="v"><span class="count" data-to="4.1" data-dec="1">0.0</span> yr</div><div class="k mono">Economic payback</div></div>
+        <div><div class="v"><span class="count" data-to="91607" data-dec="0">0</span></div><div class="k mono">Trucks removed / yr</div></div>
+      </div>
+      <div class="notes">
+        <div>
+          <h4>Traction check at 12‰</h4>
+          <p>336 kN required against 282 kN single-locomotive adhesion: the engine prescribes 2 locomotives.</p>
+          <div class="bars">
+            <div class="row"><div class="k mono"><span>Required</span><b>336 kN</b></div><div class="track-b"><div class="fill req" style="--s:1"></div></div></div>
+            <div class="row"><div class="k mono"><span>Single-loco adhesion</span><b>282 kN</b></div><div class="track-b"><div class="fill" style="--s:.839"></div></div></div>
+          </div>
+        </div>
+        <div>
+          <h4>Carbon and delivery</h4>
+          <p>797 tCO₂e embodied (EN 15804) repaid in 1.2 months of operation. 1.28M extra tonnes per year moved by rail. Phased Quick-Win starting at Ternate-Varano Borghi, followed by Travedona-Biandronno, Porto Valtravaglia and Pino-Tronzano.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section final">
+    <div class="wrap">
+      <div class="eyebrow mono">Live model</div>
+      <h2 class="mega">Your corridor<br>next.</h2>
+      <div><a class="cta" href="http://localhost:8501" target="_blank" rel="noopener"><span>LAUNCH OPTIMIZER →</span></a></div>
+      <p class="cta-sub mono">Run the pilot corridor or upload your own CSV</p>
+    </div>
+  </section>
+</main>
+
+<footer class="mono"><span>SIDING740 — Pre-screening engine for single-track freight corridors</span><span>Pilot: Luino corridor · TEN-T Rhine-Alpine</span></footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<script src="https://unpkg.com/lenis@1.1.13/dist/lenis.min.js"></script>
+<script>
+(function(){
+  gsap.registerPlugin(ScrollTrigger);
+  var REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var JUMP = new URLSearchParams(location.search).get('jump');
+  if (JUMP !== null) history.scrollRestoration = 'manual';
+  var fmt = function(v, dec){ return v.toLocaleString('en-US', { minimumFractionDigits: dec, maximumFractionDigits: dec }); };
+
+  // ---- smooth scroll ----
+  if (JUMP === null && !REDUCED && window.Lenis){
+    var lenis = new Lenis({ lerp: 0.09, smoothWheel: true });
+    lenis.on('scroll', ScrollTrigger.update);
+    gsap.ticker.add(function(t){ lenis.raf(t * 1000); });
+    gsap.ticker.lagSmoothing(0);
+  }
+
+  // ---- wordmark split ----
+  var wm = document.getElementById('wordmark');
+  wm.innerHTML = wm.textContent.split('').map(function(c){
+    // outer .cw is driven by scroll, inner .ch by the load intro: two owners never fight over one transform
+    return '<span class="cw"><span class="ch' + (/\d/.test(c) ? ' num' : '') + '" aria-hidden="true">' + c + '</span></span>';
+  }).join('');
+  var chars = wm.querySelectorAll('.ch'), cwraps = wm.querySelectorAll('.cw');
+  var intro = gsap.timeline({ delay: .15 })
+    .from(chars, { yPercent: 120, duration: 1.1, ease: 'power4.out', stagger: .06 })
+    .to('#sub', { opacity: 1, duration: .8, ease: 'power2.out' }, '-=.5')
+    .to('#rail', { scaleX: 1, duration: 1.2, ease: 'power3.inOut' }, '-=.7');
+
+  // ---- generic schematic ----
+  var NS = 'http://www.w3.org/2000/svg';
+  function el(tag, attrs, parent){ var e = document.createElementNS(NS, tag); for (var k in attrs) e.setAttribute(k, attrs[k]); if (parent) parent.appendChild(e); return e; }
+  var X0 = 40, X1 = 1160, kx = function(u){ return X0 + (X1 - X0) * u; };   // u = 0..1 along corridor
+  var kmT = document.getElementById('kmTicks');
+  for (var k = 0; k <= 50; k++){
+    var major = k % 10 === 0;
+    el('line', { x1: kx(k / 50), y1: 205, x2: kx(k / 50), y2: major ? 195 : 200, stroke: major ? 'rgba(255,255,255,.45)' : 'rgba(255,255,255,.15)' }, kmT);
+  }
+  // candidate sidings: state = selected | infeasible | idle
+  var CAND = [
+    { u: .10, s: 'idle' }, { u: .19, s: 'selected' }, { u: .29, s: 'infeasible' }, { u: .38, s: 'selected' },
+    { u: .49, s: 'idle' },  { u: .60, s: 'infeasible' }, { u: .71, s: 'selected' }, { u: .82, s: 'idle' }, { u: .90, s: 'selected' }
+  ];
+  var LEN550 = 30, LEN740 = 40;
+  var sidG = document.getElementById('sidings'), nodes = [];
+  CAND.forEach(function(c, i){
+    var g = el('g', {}, sidG), cx = kx(c.u), up = i % 2 === 0, y = up ? 96 : 144;
+    var base = el('line', { x1: cx - LEN550/2, y1: y, x2: cx + LEN550/2, y2: y, stroke: 'rgba(255,255,255,.4)', 'stroke-width': 3 }, g);
+    el('line', { x1: cx - LEN550/2 - 8, y1: 120, x2: cx - LEN550/2, y2: y, stroke: 'rgba(255,255,255,.25)', 'stroke-width': 2 }, g);
+    el('line', { x1: cx + LEN550/2 + 8, y1: 120, x2: cx + LEN550/2, y2: y, stroke: 'rgba(255,255,255,.25)', 'stroke-width': 2 }, g);
+    var id = el('text', { x: cx, y: up ? 72 : 176, 'text-anchor': 'middle' }, g);
+    id.textContent = 'S' + (i + 1 < 10 ? '0' : '') + (i + 1);
+    var n = { c: c, base: base, id: id, on: [] };
+    if (c.s === 'selected'){
+      n.on.push(el('rect', { x: cx - LEN740/2 - 6, y: y - 9, width: LEN740 + 12, height: 18, rx: 9, fill: 'rgba(0,212,255,.18)', opacity: 0 }, g));
+      n.on.push(el('line', { x1: cx - LEN740/2, y1: y, x2: cx + LEN740/2, y2: y, stroke: '#00D4FF', 'stroke-width': 5, 'stroke-linecap': 'round', opacity: 0 }, g));
+    } else if (c.s === 'infeasible'){
+      n.on.push(el('line', { x1: cx - LEN550/2, y1: y, x2: cx + LEN550/2, y2: y, stroke: '#ff4d5e', 'stroke-width': 3, opacity: 0 }, g));
+      n.on.push(el('path', { d: 'M' + (cx - 7) + ' ' + (y - 7) + ' L' + (cx + 7) + ' ' + (y + 7) + ' M' + (cx + 7) + ' ' + (y - 7) + ' L' + (cx - 7) + ' ' + (y + 7), stroke: '#ff4d5e', 'stroke-width': 2.5, fill: 'none', opacity: 0 }, g));
+    }
+    nodes.push(n);
+  });
+  var mainLit = document.getElementById('mainLit'), mainLen = X1 - X0;
+  mainLit.style.strokeDasharray = mainLen; mainLit.style.strokeDashoffset = mainLen;
+
+  var fr = document.getElementById('freight');
+  fr.innerHTML = '<i class="loco"></i><i class="loco"></i>' + new Array(29).join('<i></i>');
+
+  // ======== PINNED SCENES FIRST ========
+  var scrubbed = [];
+
+  // Scene 1
+  var tl1 = gsap.timeline({ scrollTrigger: { trigger: '#s1', start: 'top top', end: '+=140%', pin: true, scrub: true } });
+  tl1.to('#claim', { opacity: 1, y: -10, duration: .35, ease: 'none' }, 0)
+     .to('#wordmark', { scale: 1.25, letterSpacing: '.04em', duration: 1, ease: 'none' }, 0)
+     .to(cwraps, { yPercent: function(i){ return (i % 2 ? -1 : 1) * 40; }, opacity: 0, stagger: .035, duration: .45, ease: 'none' }, .5)
+     .to(['.s1 .kicker', '#subwrap'], { opacity: 0, duration: .3 }, .55)
+     .to('#claim', { opacity: 0, y: -40, duration: .3, ease: 'none' }, .78);
+  scrubbed.push(tl1);
+
+  // Scene 2
+  var lenObj = { v: 550 }, roLen = document.getElementById('roLen'), trLen = document.getElementById('trLen');
+  var roSel = document.getElementById('roSel'), roRej = document.getElementById('roRej');
+  var tl2 = gsap.timeline({ scrollTrigger: { trigger: '#s2', start: 'top top', end: '+=200%', pin: true, scrub: true } });
+  tl2.from('.s2 .head > *', { y: 40, opacity: 0, stagger: .05, duration: .12 }, 0)
+     .to(mainLit, { strokeDashoffset: 0, duration: .8, ease: 'none' }, .1)
+     .fromTo('#freight', { scaleX: 550 / 740 }, { scaleX: 1, duration: .8, ease: 'none' }, .1)
+     .to(lenObj, { v: 740, duration: .8, ease: 'none', onUpdate: function(){ var v = Math.round(lenObj.v); roLen.textContent = v; trLen.textContent = v; } }, .1);
+  nodes.forEach(function(n){
+    n.at = .1 + .8 * n.c.u;
+    if (n.c.s === 'idle'){ tl2.to(n.id, { opacity: .35, duration: .04 }, n.at - .03); return; }
+    var col = n.c.s === 'selected' ? '#00D4FF' : '#ff4d5e';
+    tl2.to(n.on, { opacity: 1, duration: .05, ease: 'none' }, n.at - .04)
+       .to(n.base, { opacity: 0, duration: .05 }, n.at - .04)
+       .to(n.id, { fill: col, duration: .04 }, n.at - .04);
+  });
+  tl2.to({}, { duration: .1 }, .9);
+  tl2.eventCallback('onUpdate', function(){
+    var t = tl2.time(), s = 0, r = 0;
+    nodes.forEach(function(n){ if (t >= n.at){ if (n.c.s === 'selected') s++; else if (n.c.s === 'infeasible') r++; } });
+    roSel.textContent = s; roRej.textContent = r;
+  });
+  scrubbed.push(tl2);
+
+  // Scene 3
+  var track = document.getElementById('track');
+  var dist = function(){ return Math.max(0, track.scrollWidth - innerWidth); };
+  var run = gsap.to(track, { x: function(){ return -dist(); }, ease: 'none',
+    scrollTrigger: { trigger: '#s3', start: 'top top', end: function(){ return '+=' + dist(); }, pin: true, scrub: 1, invalidateOnRefresh: true } });
+  scrubbed.push(run);
+  gsap.utils.toArray('.panel .big').forEach(function(e){
+    scrubbed.push(gsap.fromTo(e, { x: 80 }, { x: -40, ease: 'none',
+      scrollTrigger: { trigger: e.closest('.panel'), containerAnimation: run, start: 'left right', end: 'right left', scrub: true } }));
+  });
+  gsap.utils.toArray('.panel .glow').forEach(function(e){
+    scrubbed.push(gsap.fromTo(e, { x: -120 }, { x: 120, ease: 'none',
+      scrollTrigger: { trigger: e.closest('.panel'), containerAnimation: run, start: 'left right', end: 'right left', scrub: true } }));
+  });
+
+  // ======== AMBIENT AFTER ========
+  // pilot counters (once)
+  var counters = [];
+  gsap.utils.toArray('.count').forEach(function(e){
+    var to = +e.dataset.to, dec = +e.dataset.dec || 0, o = { v: 0 };
+    var tw = gsap.to(o, { v: to, duration: 1.8, ease: 'power2.out', paused: true, onUpdate: function(){ e.textContent = fmt(o.v, dec); } });
+    counters.push(tw);
+  });
+  ScrollTrigger.create({ trigger: '#pilot', start: 'top 70%', once: true, onEnter: function(){ counters.forEach(function(c){ c.play(); }); } });
+
+  var mrow = document.getElementById('mrow');
+  if (!REDUCED) gsap.to(mrow, { xPercent: -50, repeat: -1, duration: 30, ease: 'none' });
+  var skewTo = gsap.quickTo(mrow, 'skewX', { duration: .4, ease: 'power3' });
+  ScrollTrigger.create({ onUpdate: function(self){ skewTo(gsap.utils.clamp(-12, 12, self.getVelocity() / -250)); } });
+
+  var chapBar = document.getElementById('chapBar'), chapLabel = document.getElementById('chapLabel');
+  [['#s1','01 — Mission'],['#s2','02 — Solver'],['#s3','03 — Engine'],['#pilot','04 — Pilot']].forEach(function(c){
+    ScrollTrigger.create({ trigger: c[0], start: 'top 50%', end: 'bottom 50%', onToggle: function(self){ if (self.isActive) chapLabel.textContent = c[1]; } });
+  });
+  ScrollTrigger.create({ start: 0, end: 'max', onUpdate: function(self){ chapBar.style.transform = 'scaleX(' + self.progress.toFixed(4) + ')'; } });
+
+  var secs = document.querySelectorAll('.section');
+  if (REDUCED || !('IntersectionObserver' in window)){ secs.forEach(function(s){ s.classList.add('in'); }); }
+  else {
+    var io = new IntersectionObserver(function(es){ es.forEach(function(e){ if (e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); } }); },
+      { rootMargin: '0px 0px -12% 0px', threshold: .12 });
+    secs.forEach(function(s){ io.observe(s); });
+  }
+
+  // ======== DEV CONTRACT ========
+  function settle(){
+    intro.progress(1);
+    ScrollTrigger.refresh();
+    if (JUMP !== null){
+      window.scrollTo(0, +JUMP || 0);
+      ScrollTrigger.update();
+      scrubbed.forEach(function(a){ var st = a.scrollTrigger; if (st) a.totalProgress(st.progress); });
+      ScrollTrigger.getAll().forEach(function(st){
+        if (st.vars.once && st.progress > 0 && st.vars.onEnter) st.vars.onEnter();
+        if (st.isActive && st.vars.onToggle) st.vars.onToggle(st);
+      });
+      counters.forEach(function(c){ if (c.progress() > 0) c.progress(1); });
+      secs.forEach(function(s){ if (s.getBoundingClientRect().top < innerHeight) s.classList.add('in'); });
+    }
+    window.__ready = true;
+  }
+  if (document.readyState === 'complete') settle(); else window.addEventListener('load', settle);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(function(){ ScrollTrigger.refresh(); });
+
+  // jank meter
+  var last = performance.now(), deltas = [];
+  (function tick(now){ deltas.push(now - last); last = now; requestAnimationFrame(tick); })(last);
+  setInterval(function(){
+    if (!deltas.length) return;
+    var d = deltas.slice().sort(function(a,b){ return a - b; }); deltas = [];
+    console.log('[jank] p95=' + d[Math.floor(d.length * .95)].toFixed(1) + 'ms max=' + d[d.length-1].toFixed(1) + 'ms');
+  }, 2000);
+})();
+</script>
+</body>
+</html>
