@@ -148,6 +148,16 @@ a{color:inherit}
 .kv .k{color:var(--mute);margin-top:8px;line-height:1.4}
 @media (max-width:1000px){.kv{grid-template-columns:repeat(2,1fr)}}
 @media (max-width:520px){.kv{grid-template-columns:1fr}}
+.scen{margin-top:56px;border:1px solid var(--line);padding:clamp(22px,3vw,40px);background:rgba(255,255,255,.015)}
+.scen.primary{border-color:rgba(0,212,255,.45);box-shadow:0 0 60px -30px rgba(0,212,255,.6)}
+.scen-head{display:flex;justify-content:space-between;align-items:baseline;gap:16px;flex-wrap:wrap}
+.scen-head h3{font-size:clamp(22px,2.2vw,32px);font-weight:500}
+.scen-head h3 span{color:var(--cyan)}
+.scen-head .mono{color:var(--mute)}
+.scen .kv{margin-top:28px}
+.scen .kv .k b{color:#fff;font-weight:500}
+.scen .sub2{color:var(--mute);margin-top:14px;line-height:1.55;max-width:90ch}
+.scen.secondary .hero-stat .v{color:#d7dde6;font-size:clamp(72px,11vw,180px)}
 .pilot .notes{display:grid;grid-template-columns:1fr 1fr;gap:var(--gutter);margin-top:48px}
 .pilot .notes h4{font-size:20px;font-weight:500;margin-bottom:10px}
 .pilot .notes p{color:var(--mute);line-height:1.6}
@@ -213,9 +223,9 @@ footer{padding:40px var(--gutter);border-top:1px solid var(--line);display:flex;
         <h2>The solver <em>selects</em>. Physics <s>vetoes</s>.</h2>
       </div>
       <div class="readouts">
-        <div class="ro"><div class="v"><span id="roLen">550</span><small>m</small></div><div class="k mono">Train length</div></div>
-        <div class="ro sel"><div class="v"><span id="roSel">0</span></div><div class="k mono">Selected</div></div>
-        <div class="ro rej"><div class="v"><span id="roRej">0</span></div><div class="k mono">Infeasible</div></div>
+        <div class="ro"><div class="v"><span id="roLen">740</span><small>m</small></div><div class="k mono">Train length</div></div>
+        <div class="ro sel"><div class="v"><span id="roSel">4</span></div><div class="k mono">Selected</div></div>
+        <div class="ro rej"><div class="v"><span id="roRej">2</span></div><div class="k mono">Infeasible</div></div>
       </div>
     </div>
 
@@ -242,7 +252,7 @@ footer{padding:40px var(--gutter);border-top:1px solid var(--line);display:flex;
     </div>
 
     <div class="train-wrap">
-      <div class="lbl mono"><span>Freight train</span><span><b id="trLen">550</b> m</span></div>
+      <div class="lbl mono"><span>Freight train</span><span><b id="trLen">740</b> m</span></div>
       <div class="freight" id="freight"></div>
       <div class="train-scale mono"><span style="left:0;transform:none">0</span><span style="left:74.3%">550 m</span><span style="left:100%;transform:translateX(-100%)">740 m</span></div>
     </div>
@@ -269,15 +279,15 @@ footer{padding:40px var(--gutter);border-top:1px solid var(--line);display:flex;
       </div>
       <div class="panel"><div class="glow"></div>
         <div><div class="idx mono">03</div><div class="big" style="margin-top:18px">CO₂e<small>WTW</small></div></div>
-        <div><h3>LCA EN 15804 + WTW</h3>
+        <div><h3>LCA EN 15804 / EN 17472:2022 + WTW</h3>
           <p>Well-to-Wheel operational savings balanced against the embodied carbon of new steel and concrete.</p>
-          <ul><li>Embodied carbon per siding (EN 15804)</li><li>Road-to-rail modal shift, WTW</li><li>Carbon and economic payback</li></ul></div>
+          <ul><li>Embodied carbon per siding (EN 15804 EPD factors within EN 17472:2022)</li><li>Road-to-rail modal shift, WTW</li><li>Carbon and economic payback</li></ul></div>
       </div>
       <div class="panel"><div class="glow"></div>
         <div><div class="idx mono">04</div><div class="big sm" style="margin-top:18px">CSV→JSON</div></div>
         <div><h3>Any Corridor (CSV In / JSON Out)</h3>
-          <p>Load any single-track line as a CSV and export the pre-screening plan for OpenTrack / RailSys.</p>
-          <ul><li>Stations, siding lengths, gradients, unit costs</li><li>Ranked shortlist with cost and carbon</li><li>Ready for microsimulation handoff</li></ul></div>
+          <p>Load any single-track line as a CSV. Structured CSV/JSON export for downstream microsimulation tools (e.g., OpenTrack, RailSys).</p>
+          <ul><li>Stations, siding lengths, gradients, unit costs</li><li>Ranked shortlist with cost and carbon</li><li>Designed for downstream railway microsimulation</li></ul></div>
       </div>
     </div>
   </section>
@@ -292,11 +302,11 @@ footer{padding:40px var(--gutter);border-top:1px solid var(--line);display:flex;
     <div class="wrap">
       <div class="eyebrow mono">Positioning</div>
       <h2 class="mega">Pre-screen<br><span class="out">first.</span><br>Simulate <span class="c">less.</span></h2>
-      <p class="lede">SIDING740 is a <b>deterministic pre-screening layer upstream of OpenTrack and RailSys</b>. It narrows dozens of candidate stations to the few that matter, so microsimulation effort goes to the shortlist, not the long list.</p>
+      <p class="lede">SIDING740 is a <b>deterministic pre-screening layer designed for downstream railway microsimulation</b>, built around the 740 m requirement of the <b>EU TEN-T Regulation 2024/1679</b>. It narrows dozens of candidate stations to the few that matter, so microsimulation effort goes to the shortlist, not the long list.</p>
       <div class="cols">
         <div><span class="mono" style="color:var(--cyan)">IN</span><h4>Corridor CSV</h4><p>Station layouts, useful siding lengths, gradients, unit costs, budget and target headway.</p></div>
         <div><span class="mono" style="color:var(--cyan)">SOLVE</span><h4>MILP + physics + LCA</h4><p>Feasible, minimum-CAPEX extension set with traction and carbon checks attached. Same inputs, same answer.</p></div>
-        <div><span class="mono" style="color:var(--cyan)">OUT</span><h4>JSON plan</h4><p>A ranked shortlist ready for capacity validation in OpenTrack / RailSys.</p></div>
+        <div><span class="mono" style="color:var(--cyan)">OUT</span><h4>JSON plan</h4><p>A ranked shortlist with structured CSV/JSON export for downstream microsimulation tools (e.g., OpenTrack, RailSys).</p></div>
       </div>
     </div>
   </section>
@@ -304,30 +314,51 @@ footer{padding:40px var(--gutter);border-top:1px solid var(--line);display:flex;
   <!-- Pilot validation -->
   <section class="section pilot" id="pilot">
     <div class="wrap">
-      <div class="badge mono">Pilot Benchmark · Luino Corridor (TEN-T Rhine-Alpine)</div>
-      <div class="hero-stat">
-        <div class="v">€<span class="count" data-to="7.88" data-dec="2">0.00</span>M</div>
-        <div class="k"><b>Total CAPEX, pilot validation</b>4 sidings extended from 550 m to 750 m useful length, unlocking 740 m trains on a real Alpine freight corridor.</div>
+      <div class="badge mono">Pilot Benchmark · Luino Corridor (TEN-T Rhine-Alpine) · Model-Verified</div>
+
+      <div class="scen primary">
+        <div class="scen-head"><h3><span>2026</span> Residual Gap Assessment</h3><span class="mono">Current state · RFI Capacity Strategy 2025/2027</span></div>
+        <div class="hero-stat">
+          <div class="v">€<span class="count" data-to="2.075" data-dec="3">2.075</span>M</div>
+          <div class="k"><b>1 station: Travedona-Biandronno</b>The MILP closes the only residual gap above the 14 km limit (Ternate → Laveno, 16 km). N-1 fallback: Besozzo, +€280k.</div>
+        </div>
+        <div class="kv">
+          <div><div class="v"><span class="count" data-to="1" data-dec="0">1</span></div><div class="k mono">Station extended</div></div>
+          <div><div class="v">+<span class="count" data-to="4" data-dec="0">4</span> /day</div><div class="k mono">Freight paths<br><b>36 → 40</b></div></div>
+          <div><div class="v">+<span class="count" data-to="115" data-dec="0">115</span>k t/yr</div><div class="k mono">Extra freight (base)</div></div>
+          <div><div class="v">+<span class="count" data-to="692" data-dec="0">692</span> t/yr</div><div class="k mono">CO₂ avoided (WTW, base)</div></div>
+          <div><div class="v"><span class="count" data-to="13.8" data-dec="1">13.8</span> yr</div><div class="k mono">Socio-Economic Simple Payback<br><b>10.0 yr optimistic</b></div></div>
+        </div>
+        <p class="sub2 mono">Incremental paths credited conservatively: only the extra payload from lengthening (550 m → 740 m) is counted, not the full payload of newly created trains.</p>
       </div>
-      <div class="kv">
-        <div><div class="v"><span class="count" data-to="4" data-dec="0">0</span></div><div class="k mono">Sidings extended</div></div>
-        <div><div class="v"><span class="count" data-to="7694" data-dec="0">0</span> t/yr</div><div class="k mono">CO₂ avoided (WTW)</div></div>
-        <div><div class="v"><span class="count" data-to="0.10" data-dec="2">0.00</span> yr</div><div class="k mono">Carbon payback</div></div>
-        <div><div class="v"><span class="count" data-to="4.1" data-dec="1">0.0</span> yr</div><div class="k mono">Economic payback</div></div>
-        <div><div class="v"><span class="count" data-to="91607" data-dec="0">0</span></div><div class="k mono">Trucks removed / yr</div></div>
+
+      <div class="scen secondary">
+        <div class="scen-head"><h3>2019 Historical Scenario</h3><span class="mono">Pre-upgrade baseline · backtest</span></div>
+        <div class="hero-stat">
+          <div class="v">€<span class="count" data-to="7.875" data-dec="3">7.875</span>M</div>
+          <div class="k"><b>4 stations</b>Ternate-Varano Borghi, Travedona-Biandronno, Porto Valtravaglia, Pino-Tronzano, extended from 550 m to 750 m useful length.</div>
+        </div>
+        <div class="kv">
+          <div><div class="v"><span class="count" data-to="1.15" data-dec="2">1.15</span>M t/yr</div><div class="k mono">Extra freight (base)</div></div>
+          <div><div class="v">~<span class="count" data-to="82400" data-dec="0">82,400</span></div><div class="k mono">Trucks removed / yr</div></div>
+          <div><div class="v"><span class="count" data-to="6924" data-dec="0">6,924</span> t/yr</div><div class="k mono">CO₂ avoided (WTW, base)<br><b>Monte Carlo P50: 6,075</b></div></div>
+          <div><div class="v"><span class="count" data-to="0.12" data-dec="2">0.12</span> yr</div><div class="k mono">Carbon payback<br><b>797 tCO₂e embodied</b></div></div>
+          <div><div class="v"><span class="count" data-to="4.8" data-dec="1">4.8</span> yr</div><div class="k mono">Socio-Economic Simple Payback<br><b>3.6 yr optimistic</b></div></div>
+        </div>
       </div>
+
       <div class="notes">
         <div>
           <h4>Traction check at 12‰</h4>
-          <p>336 kN required against 282 kN single-locomotive adhesion: the engine prescribes 2 locomotives.</p>
+          <p>327 kN required (1,755 t of wagons on 702 m + locomotive) against 282 kN single-locomotive adhesion: the engine prescribes 2 locomotives.</p>
           <div class="bars">
-            <div class="row"><div class="k mono"><span>Required</span><b>336 kN</b></div><div class="track-b"><div class="fill req" style="--s:1"></div></div></div>
-            <div class="row"><div class="k mono"><span>Single-loco adhesion</span><b>282 kN</b></div><div class="track-b"><div class="fill" style="--s:.839"></div></div></div>
+            <div class="row"><div class="k mono"><span>Required</span><b>327 kN</b></div><div class="track-b"><div class="fill req" style="--s:1"></div></div></div>
+            <div class="row"><div class="k mono"><span>Single-loco adhesion</span><b>282 kN</b></div><div class="track-b"><div class="fill" style="--s:.862"></div></div></div>
           </div>
         </div>
         <div>
           <h4>Carbon and delivery</h4>
-          <p>797 tCO₂e embodied (EN 15804) repaid in 1.2 months of operation. 1.28M extra tonnes per year moved by rail. Phased Quick-Win starting at Ternate-Varano Borghi, followed by Travedona-Biandronno, Porto Valtravaglia and Pino-Tronzano.</p>
+          <p>2019 scenario: 797 tCO₂e embodied (EN 15804 / EN 17472:2022) repaid in about 1.4 months of operation; 1.15M extra tonnes per year moved by rail. In 2026 only Travedona-Biandronno remains to close the 16 km gap.</p>
         </div>
       </div>
     </div>
@@ -343,7 +374,7 @@ footer{padding:40px var(--gutter);border-top:1px solid var(--line);display:flex;
   </section>
 </main>
 
-<footer class="mono"><span>SIDING740 — Pre-screening engine for single-track freight corridors</span><span>Pilot: Luino corridor · TEN-T Rhine-Alpine</span></footer>
+<footer class="mono"><span>SIDING740 — Pre-screening engine for single-track freight corridors</span><span>Pilot Benchmark: Luino corridor · EU TEN-T Regulation 2024/1679 · EN 15804 / EN 17472:2022</span></footer>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
@@ -430,6 +461,8 @@ footer{padding:40px var(--gutter);border-top:1px solid var(--line);display:flex;
   // Scene 2
   var lenObj = { v: 550 }, roLen = document.getElementById('roLen'), trLen = document.getElementById('trLen');
   var roSel = document.getElementById('roSel'), roRej = document.getElementById('roRej');
+  // static HTML holds the final readouts (740 m / 4 / 2); with JS the scroll animation starts from 550 m / 0 / 0
+  roLen.textContent = 550; trLen.textContent = 550; roSel.textContent = 0; roRej.textContent = 0;
   var tl2 = gsap.timeline({ scrollTrigger: { trigger: '#s2', start: 'top top', end: '+=200%', pin: true, scrub: true } });
   tl2.from('.s2 .head > *', { y: 40, opacity: 0, stagger: .05, duration: .12 }, 0)
      .to(mainLit, { strokeDashoffset: 0, duration: .8, ease: 'none' }, .1)
@@ -471,7 +504,9 @@ footer{padding:40px var(--gutter);border-top:1px solid var(--line);display:flex;
   var counters = [];
   gsap.utils.toArray('.count').forEach(function(e){
     var to = +e.dataset.to, dec = +e.dataset.dec || 0, o = { v: 0 };
-    var tw = gsap.to(o, { v: to, duration: 1.8, ease: 'power2.out', paused: true, onUpdate: function(){ e.textContent = fmt(o.v, dec); } });
+    if (REDUCED){ e.textContent = fmt(to, dec); return; }   // static HTML already holds the final value
+    var tw = gsap.fromTo(o, { v: 0 }, { v: to, duration: 1.8, ease: 'power2.out', paused: true, immediateRender: false,
+      onStart: function(){ e.textContent = fmt(0, dec); }, onUpdate: function(){ e.textContent = fmt(o.v, dec); } });
     counters.push(tw);
   });
   ScrollTrigger.create({ trigger: '#pilot', start: 'top 70%', once: true, onEnter: function(){ counters.forEach(function(c){ c.play(); }); } });
